@@ -1,4 +1,6 @@
 import argparse
+from src.scanner.scanner import GooglePhotosScanner
+from src.manifest.manifest import ManifestManager
 
 def main():
     parser = argparse.ArgumentParser(description="Google Photos to Koofr Sync Engine")
@@ -10,7 +12,12 @@ def main():
     if args.dry_run:
         print("[INFO] Che do DRY-RUN: Khong co thay doi nao duoc thuc hien.")
 
-    print(f"[OK] Khoi tao khung he thong thanh cong. Buoc: {args.step or 'ALL'}")
+    # [1] Step Scan & Manifest
+    if args.step in ["scan", "manifest", None]:
+        scanner = GooglePhotosScanner()
+        if scanner.run():
+            manifest_mgr = ManifestManager()
+            manifest_mgr.build_manifest()
 
 if __name__ == "__main__":
     main()

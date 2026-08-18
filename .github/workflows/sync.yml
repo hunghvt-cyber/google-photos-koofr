@@ -34,11 +34,13 @@ jobs:
         env:
           KOOFR_USER: ${{ secrets.KOOFR_USER }}
           KOOFR_PASS: ${{ secrets.KOOFR_PASS }}
+          DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo apt-get update && sudo apt-get install -y rclone
+          sudo apt-get update -y
+          sudo apt-get install -y rclone
           mkdir -p ~/.config/rclone
           
-          # Mật khẩu Koofr app password được rclone obfuscate hoặc truyền trực tiếp qua config WebDAV
+          # Cấu hình WebDAV kết nối tới Koofr
           cat <<EOF > ~/.config/rclone/rclone.conf
           [koofr_remote]
           type = webdav

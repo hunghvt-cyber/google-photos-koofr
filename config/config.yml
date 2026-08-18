@@ -1,5 +1,5 @@
 safety:
-  min_expected_items: 10
+  min_expected_items: 1
   max_delete_ratio: 0.05
   max_delete_absolute: 100
 

@@ -5,6 +5,9 @@ from src.manifest.manifest import ManifestManager
 from src.compare.compare import PhotoComparer
 from src.planner.planner import SyncPlanner
 from src.safety.safety import SafetyGuardrail
+from src.downloader.downloader import PhotoDownloader
+from src.koofr.koofr import KoofrAdapter
+from src.verifier.verifier import FileVerifier
 
 def main():
     parser = argparse.ArgumentParser(description="Google Photos to Koofr Sync Engine")
@@ -37,6 +40,19 @@ def main():
         if not safety.validate():
             print("[CRITICAL] Dung chu trinh vi nguy co mat an toan du lieu!")
             sys.exit(1)
+
+    # [4] Download, Upload & Delete Executions
+    if args.step in ["sync", None]:
+        downloader = PhotoDownloader()
+        koofr = KoofrAdapter()
+        verifier = FileVerifier()
+
+        downloaded_items = downloader.download_pending()
+        for item in downloaded_items:
+            success = koofr.upload_file(item["local_path"], item["filename"], dry_run=args.dry_run)
+            verifier.verify_and_cleanup(item["local_path"], success_upload=success)
+
+        print("[SUCCESS] Hoan thanh chu trinh dong bo!")
 
 if __name__ == "__main__":
     main()

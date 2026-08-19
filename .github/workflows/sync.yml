@@ -2,10 +2,8 @@ name: Google Photos to Koofr Sync
 
 on:
   schedule:
-    # Chạy tự động lúc 02:00 sáng hàng ngày (giờ UTC)
     - cron: '0 2 * * *'
   workflow_dispatch:
-    # Cho phép bấm nút chạy thủ công từ giao diện GitHub
     inputs:
       dry_run:
         description: 'Chạy thử nghiệm (Dry Run)?'
@@ -40,7 +38,6 @@ jobs:
           sudo apt-get install -y rclone
           mkdir -p ~/.config/rclone
           
-          # Cấu hình WebDAV kết nối tới Koofr
           cat <<EOF > ~/.config/rclone/rclone.conf
           [koofr_remote]
           type = webdav
@@ -50,11 +47,27 @@ jobs:
           pass = $(rclone obscure "$KOOFR_PASS")
           EOF
 
+      # Kéo file state đã lưu từ cache (nếu có)
+      - name: Restore State Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/koofr_state.json
+          key: koofr-state-${{ github.run_id }}
+          restore-keys: |
+            koofr-state-
+
       - name: Run Sync Engine
         run: |
-          # Kiểm tra nếu chạy thủ công với cờ dry_run
           if [ "${{ inputs.dry_run }}" = "false" ]; then
             python -m src.main
           else
             python -m src.main --dry-run
           fi
+
+      # Lưu lại file state mới vào cache cho lần chạy kế tiếp
+      - name: Save State Cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/koofr_state.json
+          key: koofr-state-${{ github.run_id }}

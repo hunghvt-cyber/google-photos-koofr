@@ -8,10 +8,11 @@ from src.safety.safety import SafetyGuardrail
 from src.downloader.downloader import PhotoDownloader
 from src.koofr.koofr import KoofrAdapter
 from src.verifier.verifier import FileVerifier
+from src.state.state import StateManager
 
 def main():
     parser = argparse.ArgumentParser(description="Google Photos to Koofr Sync Engine")
-    parser.add_argument("--step", choices=["scan", "manifest", "compare", "plan", "safety", "sync"])
+    parser.add_argument("--step", choices=["scan", "manifest", "compare", "plan", "safety", "sync", "state"])
     parser.add_argument("--dry-run", action="store_true")
     
     args = parser.parse_args()
@@ -41,18 +42,22 @@ def main():
             print("[CRITICAL] Dung chu trinh vi nguy co mat an toan du lieu!")
             sys.exit(1)
 
-    # [4] Download, Upload & Delete Executions
-    if args.step in ["sync", None]:
+    # [4] Sync Actions & Update State
+    if args.step in ["sync", "state", None]:
         downloader = PhotoDownloader()
         koofr = KoofrAdapter()
         verifier = FileVerifier()
+        state_mgr = StateManager()
 
         downloaded_items = downloader.download_pending()
         for item in downloaded_items:
             success = koofr.upload_file(item["local_path"], item["filename"], dry_run=args.dry_run)
             verifier.verify_and_cleanup(item["local_path"], success_upload=success)
 
-        print("[SUCCESS] Hoan thanh chu trinh dong bo!")
+        # Cập nhật State DB
+        state_mgr.update_state(dry_run=args.dry_run)
+
+        print("[SUCCESS] Hoan thanh chu trinh dong bo va cap nhat State!")
 
 if __name__ == "__main__":
     main()
